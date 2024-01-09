@@ -1,0 +1,11 @@
+[package]
+name = "rust-project"
+version = "0.1.0"
+edition = "2021"
+authors = ["Covita Sebastian Marian"]
+
+
+[dependencies]
+reqwest = "0.11"
+select = "0.6"
+tokio = { version = "1", features = ["full"] }
