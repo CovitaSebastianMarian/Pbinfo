@@ -26,11 +26,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for node in document.find(|node: &Node| node.text().contains(search_word.as_str())) {
             let node_text = node.text();
             if let Some(position) = node_text.find(search_word.as_str()) {
+                
+                /*
                 let following_words = &node_text[position..]
                     .split_whitespace()
-                    .take(9)
+                    .take(1)
                     .collect::<Vec<&str>>()
                     .join(" ");
+                */
+
+                
+                let text = node_text[position..].split_whitespace().collect::<Vec<&str>>();
+                let mut vec: Vec<&str> = Vec::new();
+                for i in 0..text.len(){
+                    vec.push(text[i]);
+                    if text[i] == "Evaluare" {
+                        vec.push(text[i + 1]);
+                        vec.push(text[i + 2]);
+                        break;
+                    }
+                }
+                let following_words = vec.join(" ");
+                
 
                 found = true;
                 if following_words.len() > search_word.len() + 1 {
@@ -42,17 +59,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         
-        let ch = if found { "$" } else { "_" };
+        let ch = if found { "|" } else { "-" };
         print!("\x1B[1A");
         println!("{}{}", format!("\x1B[{}C", i + 1).to_string(), ch);
     }
     if found_links.len() != 0 {
         for i in found_links {
-            println!("Link: {}, info: {}", i.0, i.1);
+            println!("Link: {}, name: {}", i.0, i.1);
         }
     } else {
         println!("Cuvantul {} nu a fost gasit!", search_word);
     }
+    
+    let mut buffer = String::new();
+    io::stdin().read_line(&mut buffer).unwrap();
 
     Ok(())
 }
