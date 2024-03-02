@@ -1,4 +1,5 @@
-use std::io::{self};
+use std::fs;
+use std::io::{self, Read, Write};
 
 use reqwest;
 use select::document::Document;
@@ -26,19 +27,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for node in document.find(|node: &Node| node.text().contains(search_word.as_str())) {
             let node_text = node.text();
             if let Some(position) = node_text.find(search_word.as_str()) {
-                
-                /*
-                let following_words = &node_text[position..]
-                    .split_whitespace()
-                    .take(1)
-                    .collect::<Vec<&str>>()
-                    .join(" ");
-                */
-
-                
+                                
                 let text = node_text[position..].split_whitespace().collect::<Vec<&str>>();
                 let mut vec: Vec<&str> = Vec::new();
-                for i in 0..text.len(){
+                for i in 0..text.len() {
                     vec.push(text[i]);
                     if text[i] == "Evaluare" {
                         vec.push(text[i + 1]);
@@ -59,20 +51,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         
-        let ch = if found { "|" } else { "-" };
+        let ch = if found { "#" } else { "_" };
         print!("\x1B[1A");
         println!("{}{}", format!("\x1B[{}C", i + 1).to_string(), ch);
     }
     if found_links.len() != 0 {
-        for i in found_links {
-            println!("Link: {}, name: {}", i.0, i.1);
+        for i in found_links.clone() {
+            let log = format!("[Link] {}\n[Details] {}\n\n", i.0, i.1);
+            print!("{}", log);
         }
     } else {
         println!("Cuvantul {} nu a fost gasit!", search_word);
     }
     
+
     let mut buffer = String::new();
     io::stdin().read_line(&mut buffer).unwrap();
+    if buffer.trim() == "save" && found_links.len() != 0 {
+
+        let mut open_history = fs::File::open("history.txt").unwrap();
+        let mut history_buffer = String::new();
+        open_history.read_to_string(&mut history_buffer).unwrap();
+
+        for i in 0..found_links.len() {
+            while found_links.len() != 0 && history_buffer.contains(found_links[i].clone().1.as_str()) {
+                found_links.remove(i);
+            }
+        }
+        
+
+        if found_links.len() != 0 {
+            let mut file = fs::OpenOptions::new().write(true).append(true).open("history.txt").unwrap();
+            for i in found_links {
+                let log = format!("\n[Link] {}\n[Details] {}\n", i.0, i.1);
+                file.write_all(log.as_bytes()).unwrap();
+            }
+        }
+    }
 
     Ok(())
 }
